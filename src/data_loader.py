@@ -33,12 +33,27 @@ DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "ev
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def load_bundled_data() -> pd.DataFrame:
-    """Load the bundled synthetic demonstration dataset."""
+    """Load the bundled synthetic demonstration dataset.
+    If the CSV is missing (e.g. after a fresh cloud deploy that excluded data/),
+    auto-generates it on the fly using the dataset generator.
+    """
     if not os.path.exists(DATA_PATH):
-        raise FileNotFoundError(
-            f"Bundled dataset not found at: {DATA_PATH}\n"
-            "Please run: python src/generate_dataset.py"
-        )
+        # Auto-generate if missing (Streamlit Community Cloud safety fallback)
+        try:
+            import sys
+            src_dir = os.path.dirname(__file__)
+            if src_dir not in sys.path:
+                sys.path.insert(0, src_dir)
+            from generate_dataset import generate  # type: ignore
+            os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
+            df = generate()
+            df.to_csv(DATA_PATH, index=False)
+            return df
+        except Exception:
+            raise FileNotFoundError(
+                f"Dataset not found at {DATA_PATH} and auto-generation failed.\n"
+                "Run: python src/generate_dataset.py"
+            )
     df = pd.read_csv(DATA_PATH, low_memory=False)
     return df
 

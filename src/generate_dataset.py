@@ -244,6 +244,10 @@ def generate_dataset():
     return df
 
 
+# Public alias — used by data_loader auto-generation fallback on Streamlit Cloud
+generate = generate_dataset
+
+
 if __name__ == "__main__":
     print("Generating EV Market synthetic dataset...")
     df = generate_dataset()
@@ -252,7 +256,7 @@ if __name__ == "__main__":
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     df.to_csv(out_path, index=False)
     
-    print(f"✓ Dataset saved: {out_path}")
+    print(f"Dataset saved: {out_path}")
     print(f"  Rows: {len(df):,}")
     print(f"  Columns: {len(df.columns)}")
     print(f"  Categories:\n{df['category'].value_counts().to_string()}")
